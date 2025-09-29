@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 void main() {
   runApp(const MyApp());
@@ -29,6 +31,8 @@ class _LifecarAppState extends State<LifecarApp> {
   late InAppWebViewController _controller;
   late PullToRefreshController _pullToRefreshController;
   String? _errorMessage;
+  bool _isConnected = true;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
   @override
   void initState() {
@@ -49,11 +53,55 @@ class _LifecarAppState extends State<LifecarApp> {
         }
       },
     );
+    _checkConnectivity();
+    _startConnectivityListener();
+  }
+
+  @override
+  void dispose() {
+    _connectivitySubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _checkConnectivity() async {
+    final connectivityResult = await Connectivity().checkConnectivity();
+    final isConnected = connectivityResult.any((result) => 
+        result == ConnectivityResult.mobile || 
+        result == ConnectivityResult.wifi ||
+        result == ConnectivityResult.ethernet);
+    
+    setState(() {
+      _isConnected = isConnected;
+      if (!_isConnected) {
+        _errorMessage = 'Internet aloqasi yo\'q';
+      }
+    });
+  }
+
+  void _startConnectivityListener() {
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
+      final isConnected = results.any((result) => 
+          result == ConnectivityResult.mobile || 
+          result == ConnectivityResult.wifi ||
+          result == ConnectivityResult.ethernet);
+      
+      setState(() {
+        _isConnected = isConnected;
+        if (_isConnected) {
+          _errorMessage = null;
+        } else {
+          _errorMessage = 'Internet aloqasi yo\'q';
+        }
+      });
+    });
   }
 
   Future<void> _handleRefresh() async {
-    // Fallback for manual refresh trigger from the error screen button
-    await _controller.reload();
+    // Check connectivity first, then reload
+    await _checkConnectivity();
+    if (_isConnected) {
+      await _controller.reload();
+    }
   }
 
   @override
@@ -69,20 +117,30 @@ class _LifecarAppState extends State<LifecarApp> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(
-                        Icons.error_outline,
-                        size: 64,
+                        Icons.wifi_off,
+                        size: 80,
                         color: Colors.white,
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _errorMessage!,
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Internet aloqasi yo\'q',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
-                          fontSize: 16,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 16),
+                      const Text(
+                        'Internet yoki Wi-Fi aloqasini tekshiring',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
                       ElevatedButton(
                         onPressed: () {
                           _handleRefresh();
@@ -90,8 +148,18 @@ class _LifecarAppState extends State<LifecarApp> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: const Color(0xFF416047),
+                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
-                        child: const Text('Qayta urinish'),
+                        child: const Text(
+                          'Qayta urinish',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -125,9 +193,12 @@ class _LifecarAppState extends State<LifecarApp> {
                 },
                 onReceivedError: (controller, request, error) {
                   _pullToRefreshController.endRefreshing();
-                  setState(() {
-                    _errorMessage = 'Xatolik: ${error.description}';
-                  });
+                  // Only show error if it's a network error and we're connected
+                  if (_isConnected) {
+                    setState(() {
+                      _errorMessage = 'Xatolik: ${error.description}';
+                    });
+                  }
                 },
               ),
       ),
