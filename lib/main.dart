@@ -65,11 +65,13 @@ class _LifecarAppState extends State<LifecarApp> {
 
   Future<void> _checkConnectivity() async {
     final connectivityResult = await Connectivity().checkConnectivity();
-    final isConnected = connectivityResult.any((result) => 
-        result == ConnectivityResult.mobile || 
-        result == ConnectivityResult.wifi ||
-        result == ConnectivityResult.ethernet);
-    
+    final isConnected = connectivityResult.any(
+      (result) =>
+          result == ConnectivityResult.mobile ||
+          result == ConnectivityResult.wifi ||
+          result == ConnectivityResult.ethernet,
+    );
+
     setState(() {
       _isConnected = isConnected;
       if (!_isConnected) {
@@ -79,12 +81,16 @@ class _LifecarAppState extends State<LifecarApp> {
   }
 
   void _startConnectivityListener() {
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
-      final isConnected = results.any((result) => 
-          result == ConnectivityResult.mobile || 
-          result == ConnectivityResult.wifi ||
-          result == ConnectivityResult.ethernet);
-      
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
+      List<ConnectivityResult> results,
+    ) {
+      final isConnected = results.any(
+        (result) =>
+            result == ConnectivityResult.mobile ||
+            result == ConnectivityResult.wifi ||
+            result == ConnectivityResult.ethernet,
+      );
+
       setState(() {
         _isConnected = isConnected;
         if (_isConnected) {
@@ -105,6 +111,8 @@ class _LifecarAppState extends State<LifecarApp> {
   }
 
   @override
+
+  
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -116,11 +124,7 @@ class _LifecarAppState extends State<LifecarApp> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
-                        Icons.wifi_off,
-                        size: 80,
-                        color: Colors.white,
-                      ),
+                      const Icon(Icons.wifi_off, size: 80, color: Colors.white),
                       const SizedBox(height: 24),
                       const Text(
                         'Internet aloqasi yo\'q',
@@ -135,10 +139,7 @@ class _LifecarAppState extends State<LifecarApp> {
                       const Text(
                         'Internet yoki Wi-Fi aloqasini tekshiring',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 16,
-                        ),
+                        style: TextStyle(color: Colors.white70, fontSize: 16),
                       ),
                       const SizedBox(height: 32),
                       ElevatedButton(
@@ -148,7 +149,10 @@ class _LifecarAppState extends State<LifecarApp> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: const Color(0xFF416047),
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 16,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
